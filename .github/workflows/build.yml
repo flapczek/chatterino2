@@ -38,6 +38,8 @@ jobs:
     # However, this means if you need to add a dependency to the build, you'll need to do that
     # in the https://github.com/Chatterino/docker repository first.
     name: "Build Ubuntu in Docker"
+    # Fork: only Windows builds are needed
+    if: false
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     strategy:
@@ -147,12 +149,7 @@ jobs:
     strategy:
       matrix:
         include:
-          # macOS
-          - os: macos-26
-            qt-version: 6.11.1
-            force-lto: false
-            skip-artifact: false
-            skip-crashpad: false
+          # Fork: only Windows builds are needed
           # Windows
           - os: windows-latest
             qt-version: 6.8.3
