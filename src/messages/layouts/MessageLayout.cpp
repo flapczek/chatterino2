@@ -453,6 +453,15 @@ void MessageLayout::updateBuffer(QPixmap *buffer,
             backgroundColor = QColor("#404040");
         }
     }
+    else if (this->message_->flags.has(MessageFlag::MonitoredMessage) &&
+             ctx.preferences.enableMonitoredHighlight)
+    {
+        // Messages that were marked as monitored after they were added don't
+        // have a highlight color, so we apply it here
+        backgroundColor = blendColors(
+            backgroundColor,
+            *ctx.colorProvider.color(ColorType::MonitoredHighlight));
+    }
     else if (this->message_->flags.has(MessageFlag::Debug))
     {
         backgroundColor = QColor("#4A273D");

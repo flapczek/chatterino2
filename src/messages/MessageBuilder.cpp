@@ -645,6 +645,19 @@ void tokenizeWordsWithEmoji(QStringView text,
             }});
 }
 
+/// Badge shown in front of messages from users that are monitored with
+/// Twitch's "Suspicious User" feature
+EmotePtr makeMonitoredUserBadge()
+{
+    return std::make_shared<Emote>(Emote{
+        .name = EmoteName{},
+        .images =
+            ImageSet{Image::fromResourcePixmap(getResources().twitch.automod)},
+        .tooltip = Tooltip{"Monitored Suspicious User"},
+        .homePage = Url{},
+    });
+}
+
 }  // namespace
 
 namespace chatterino {
@@ -1822,6 +1835,11 @@ std::pair<MessagePtrMut, HighlightAlert> MessageBuilder::makeIrcMessage(
     MessageBuilder::parseRoomID(tags, twitchChannel);
     twitchChannel = builder.parseSharedChatInfo(tags, twitchChannel);
 
+    if (twitchChannel != nullptr && twitchChannel->isUserMonitored(userID))
+    {
+        builder->flags.set(MessageFlag::MonitoredMessage);
+    }
+
     // If it is a reward it has to be appended first
     if (!args.channelPointRewardId.isEmpty())
     {
@@ -1893,6 +1911,13 @@ std::pair<MessagePtrMut, HighlightAlert> MessageBuilder::makeIrcMessage(
         builder.appendFfzBadges(twitchChannel, userID);
         builder.appendBttvBadges(userID);
         builder.appendSeventvBadges(userID);
+
+        if (builder->flags.has(MessageFlag::MonitoredMessage))
+        {
+            builder.emplace<BadgeElement>(
+                makeMonitoredUserBadge(),
+                MessageElementFlag::BadgeChannelAuthority);
+        }
 
         builder.appendUsername(tags, args);
 

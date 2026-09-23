@@ -290,6 +290,32 @@ void HighlightModel::afterInit()
 
     this->insertCustomRow(coloredAnnouncementRow,
                           HighlightRowIndexes::ColoredAnnouncementRow);
+
+    // Highlight settings for messages from monitored suspicious users
+    const std::vector<QStandardItem *> monitoredRow = this->createRow();
+    setBoolItem(monitoredRow[Column::Pattern],
+                getSettings()->enableMonitoredHighlight.getValue(), true,
+                false);
+    monitoredRow[Column::Pattern]->setData(
+        "Monitored Suspicious Users (moderator only)", Qt::DisplayRole);
+    monitoredRow[Column::ShowInMentions]->setFlags({});
+    setBoolItem(monitoredRow[Column::FlashTaskbar],
+                getSettings()->enableMonitoredHighlightTaskbar.getValue(), true,
+                false);
+    setBoolItem(monitoredRow[Column::PlaySound],
+                getSettings()->enableMonitoredHighlightSound.getValue(), true,
+                false);
+    monitoredRow[Column::UseRegex]->setFlags({});
+    monitoredRow[Column::CaseSensitive]->setFlags({});
+
+    const auto monitoredSound =
+        QUrl(getSettings()->monitoredHighlightSoundUrl.getValue());
+    setFilePathItem(monitoredRow[Column::SoundPath], monitoredSound, false);
+    auto monitoredColor =
+        ColorProvider::instance().color(ColorType::MonitoredHighlight);
+    setColorItem(monitoredRow[Column::Color], *monitoredColor, false);
+
+    this->insertCustomRow(monitoredRow, HighlightRowIndexes::MonitoredRow);
 }
 
 void HighlightModel::customRowSetData(const std::vector<QStandardItem *> &row,
@@ -348,6 +374,11 @@ void HighlightModel::customRowSetData(const std::vector<QStandardItem *> &row,
                          HighlightRowIndexes::ColoredAnnouncementRow)
                 {
                     getSettings()->enableColoredAnnouncementHighlight.setValue(
+                        value.toBool());
+                }
+                else if (rowIndex == HighlightRowIndexes::MonitoredRow)
+                {
+                    getSettings()->enableMonitoredHighlight.setValue(
                         value.toBool());
                 }
             }
@@ -412,6 +443,11 @@ void HighlightModel::customRowSetData(const std::vector<QStandardItem *> &row,
                     getSettings()->enableAutomodHighlightTaskbar.setValue(
                         value.toBool());
                 }
+                else if (rowIndex == HighlightRowIndexes::MonitoredRow)
+                {
+                    getSettings()->enableMonitoredHighlightTaskbar.setValue(
+                        value.toBool());
+                }
             }
         }
         break;
@@ -453,6 +489,11 @@ void HighlightModel::customRowSetData(const std::vector<QStandardItem *> &row,
                     getSettings()->enableAutomodHighlightSound.setValue(
                         value.toBool());
                 }
+                else if (rowIndex == HighlightRowIndexes::MonitoredRow)
+                {
+                    getSettings()->enableMonitoredHighlightSound.setValue(
+                        value.toBool());
+                }
             }
         }
         break;
@@ -491,6 +532,11 @@ void HighlightModel::customRowSetData(const std::vector<QStandardItem *> &row,
                 else if (rowIndex == HighlightRowIndexes::AutomodRow)
                 {
                     getSettings()->automodHighlightSoundUrl.setValue(
+                        value.toString());
+                }
+                else if (rowIndex == HighlightRowIndexes::MonitoredRow)
+                {
+                    getSettings()->monitoredHighlightSoundUrl.setValue(
                         value.toString());
                 }
             }
@@ -549,6 +595,11 @@ void HighlightModel::customRowSetData(const std::vector<QStandardItem *> &row,
                 {
                     setColor(getSettings()->announcementHighlightColor,
                              ColorType::AnnouncementHighlight);
+                }
+                else if (rowIndex == HighlightRowIndexes::MonitoredRow)
+                {
+                    setColor(getSettings()->monitoredHighlightColor,
+                             ColorType::MonitoredHighlight);
                 }
             }
         }

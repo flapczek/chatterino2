@@ -455,6 +455,62 @@ TEST_F(HighlightControllerTest, LoggedInAndConfigured)
                     },
             },
         },
+        {
+            // TEST CASE: Messages from monitored suspicious users are highlighted
+            {
+                // input
+                .args = MessageParseArgs{},
+                .senderName = "forsen",
+                .originalMessage = "hello",
+                .flags = MessageFlag::MonitoredMessage,
+            },
+            {
+                // expected
+                .state = true,  // state
+                .result =
+                    {
+                        false,         // alert
+                        false,         // playsound
+                        std::nullopt,  // custom sound url
+                        std::make_shared<QColor>(
+                            HighlightPhrase::
+                                FALLBACK_MONITORED_HIGHLIGHT_COLOR),  // color
+                        false,  // showInMentions
+                    },
+            },
+        },
+    };
+
+    this->runTests(tests);
+}
+
+TEST_F(HighlightControllerTest, MonitoredHighlightDisabled)
+{
+    configure(R"!(
+{
+    "highlighting": {
+        "monitored": {
+            "enabled": false
+        }
+    }
+})!",
+              true);
+
+    std::vector<TestCase> tests{
+        {
+            {
+                // input
+                .args = MessageParseArgs{},
+                .senderName = "forsen",
+                .originalMessage = "hello",
+                .flags = MessageFlag::MonitoredMessage,
+            },
+            {
+                // expected
+                .state = false,
+                .result = HighlightResult::emptyResult(),
+            },
+        },
     };
 
     this->runTests(tests);

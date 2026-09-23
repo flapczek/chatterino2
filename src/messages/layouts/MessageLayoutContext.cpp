@@ -80,6 +80,12 @@ void MessagePreferences::connectSettings(Settings *settings,
         },
         holder);
 
+    settings->enableMonitoredHighlight.connect(
+        [this](const auto &newValue) {
+            this->enableMonitoredHighlight = newValue;
+        },
+        holder);
+
     settings->enableAnnouncementHighlight.connect(
         [this](const auto &newValue) {
             this->enableAnnouncementHighlight = newValue;

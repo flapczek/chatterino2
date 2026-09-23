@@ -248,6 +248,45 @@ void rebuildMessageHighlights(Settings &settings,
                 };
             }});
     }
+
+    if (settings.enableMonitoredHighlight)
+    {
+        const auto highlightSound =
+            settings.enableMonitoredHighlightSound.getValue();
+        const auto highlightAlert =
+            settings.enableMonitoredHighlightTaskbar.getValue();
+        const auto highlightSoundUrlValue =
+            settings.monitoredHighlightSoundUrl.getValue();
+
+        checks.emplace_back(HighlightCheck{
+            [=](const auto & /*args*/, const auto & /*twitchBadges*/,
+                const auto & /*senderName*/, const auto & /*originalMessage*/,
+                const auto &flags,
+                const auto /*self*/) -> std::optional<HighlightResult> {
+                if (!flags.has(MessageFlag::MonitoredMessage))
+                {
+                    return std::nullopt;
+                }
+
+                std::optional<QUrl> highlightSoundUrl;
+                if (!highlightSoundUrlValue.isEmpty())
+                {
+                    highlightSoundUrl = highlightSoundUrlValue;
+                }
+
+                // The custom monitored highlight color is handled in ColorProvider
+                auto highlightColor = ColorProvider::instance().color(
+                    ColorType::MonitoredHighlight);
+
+                return HighlightResult{
+                    highlightAlert,     // alert
+                    highlightSound,     // playSound
+                    highlightSoundUrl,  // customSoundUrl
+                    highlightColor,     // color
+                    false,              // showInMentions
+                };
+            }});
+    }
 }
 
 void rebuildUserHighlights(Settings &settings,
@@ -404,6 +443,11 @@ HighlightController::HighlightController(Settings &settings,
     this->rebuildListener_.addSetting(settings.enableAutomodHighlightSound);
     this->rebuildListener_.addSetting(settings.enableAutomodHighlightTaskbar);
     this->rebuildListener_.addSetting(settings.automodHighlightSoundUrl);
+
+    this->rebuildListener_.addSetting(settings.enableMonitoredHighlight);
+    this->rebuildListener_.addSetting(settings.enableMonitoredHighlightSound);
+    this->rebuildListener_.addSetting(settings.enableMonitoredHighlightTaskbar);
+    this->rebuildListener_.addSetting(settings.monitoredHighlightSoundUrl);
 
     this->rebuildListener_.setCB([this, &settings] {
         qCDebug(chatterinoHighlights)

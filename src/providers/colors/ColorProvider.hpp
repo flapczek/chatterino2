@@ -25,6 +25,8 @@ enum class ColorType {
     // Used in automatic highlights of your own messages
     SelfMessageHighlight,
     AutomodHighlight,
+    // Messages from users marked as monitored with Twitch's "Suspicious User" feature
+    MonitoredHighlight,
     AnnouncementHighlight,
     AnnouncementBlue,
     AnnouncementGreen,

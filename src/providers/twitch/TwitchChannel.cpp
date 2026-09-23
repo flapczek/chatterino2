@@ -932,6 +932,29 @@ bool TwitchChannel::isMod() const
     return this->mod_;
 }
 
+void TwitchChannel::setUserMonitored(const QString &userID, bool monitored)
+{
+    if (userID.isEmpty())
+    {
+        return;
+    }
+
+    auto monitoredUserIDs = this->monitoredUserIDs_.access();
+    if (monitored)
+    {
+        monitoredUserIDs->insert(userID);
+    }
+    else
+    {
+        monitoredUserIDs->erase(userID);
+    }
+}
+
+bool TwitchChannel::isUserMonitored(const QString &userID) const
+{
+    return this->monitoredUserIDs_.accessConst()->contains(userID);
+}
+
 bool TwitchChannel::isVip() const
 {
     return this->vip_;

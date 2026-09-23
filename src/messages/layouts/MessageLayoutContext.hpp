@@ -55,6 +55,7 @@ struct MessagePreferences {
     bool enableSubHighlight{};
     bool enableWatchStreakHighlight{};
     bool enableAutomodHighlight{};
+    bool enableMonitoredHighlight{};
     bool enableAnnouncementHighlight{};
     bool enableColoredAnnouncementHighlight{};
 

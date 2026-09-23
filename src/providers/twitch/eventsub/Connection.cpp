@@ -56,6 +56,61 @@ concept CanHandleModMessage =
         handleModerateMessage(channel, time, event, action);
     };
 
+/// How many of the most recent messages we look through when trying to find
+/// the IRC message a monitored-user event belongs to
+constexpr size_t MONITORED_MESSAGE_SEARCH_LIMIT = 100;
+
+/// Remembers the user as monitored & marks the IRC message that this
+/// monitored-user event refers to.
+///
+/// The EventSub event usually arrives after the IRC message, so the message
+/// must be flagged after it has been added.
+void markUserAsMonitored(TwitchChannel *channel, const QString &userID,
+                         const QString &text)
+{
+    channel->setUserMonitored(userID, true);
+
+    // The EventSub library doesn't expose the message ID, so we match on the
+    // sender & the message text. If the text doesn't match (e.g. because of
+    // ignored phrase replacements), fall back to the newest message from the
+    // user.
+    MessagePtr fallback;
+    MessagePtr match;
+    auto snapshot = channel->getMessageSnapshot(MONITORED_MESSAGE_SEARCH_LIMIT);
+    for (auto it = snapshot.rbegin(); it != snapshot.rend(); ++it)
+    {
+        const auto &msg = *it;
+        if (msg->userID != userID ||
+            msg->flags.has(MessageFlag::LowTrustUsers))
+        {
+            continue;
+        }
+        if (msg->flags.has(MessageFlag::MonitoredMessage))
+        {
+            // Everything older than this was already handled
+            break;
+        }
+        if (msg->messageText == text)
+        {
+            match = msg;
+            break;
+        }
+        if (!fallback)
+        {
+            fallback = msg;
+        }
+    }
+
+    const auto &target = match ? match : fallback;
+    if (!target)
+    {
+        return;
+    }
+
+    target->flags.set(MessageFlag::MonitoredMessage);
+    getApp()->getWindows()->invalidateChannelViewBuffers(channel);
+}
+
 }  // namespace
 
 namespace chatterino::eventsub {
@@ -285,6 +340,29 @@ void Connection::onChannelSuspiciousUserMessage(
     const lib::payload::channel_suspicious_user_message::v1::Payload &payload)
 {
     // monitored chats are received over irc; in the future, we will use eventsub instead
+    if (payload.event.lowTrustStatus ==
+        lib::suspicious_users::Status::ActiveMonitoring)
+    {
+        auto *channel = dynamic_cast<TwitchChannel *>(
+            getApp()
+                ->getTwitch()
+                ->getChannelOrEmpty(payload.event.broadcasterUserLogin.qt())
+                .get());
+        if (!channel || channel->isEmpty())
+        {
+            qCDebug(LOG) << "Monitored message for broadcaster we're not "
+                            "interested in"
+                         << payload.event.broadcasterUserLogin.qt();
+            return;
+        }
+
+        runInGuiThread([channel, userID = payload.event.userID.qt(),
+                        text = payload.event.message.text.qt()] {
+            markUserAsMonitored(channel, userID, text);
+        });
+        return;
+    }
+
     if (payload.event.lowTrustStatus !=
         lib::suspicious_users::Status::Restricted)
     {
@@ -336,10 +414,14 @@ void Connection::onChannelSuspiciousUserUpdate(
 
     auto time = chronoToQDateTime(metadata.messageTimestamp);
     auto message = makeSuspiciousUserUpdate(channel, time, payload.event);
+    auto monitored = payload.event.lowTrustStatus ==
+                     lib::suspicious_users::Status::ActiveMonitoring;
 
-    runInGuiThread([channel, message] {
-        channel->addMessage(message, MessageContext::Original);
-    });
+    runInGuiThread(
+        [channel, message, monitored, userID = payload.event.userID.qt()] {
+            channel->setUserMonitored(userID, monitored);
+            channel->addMessage(message, MessageContext::Original);
+        });
 }
 
 void Connection::onChannelChatUserMessageHold(

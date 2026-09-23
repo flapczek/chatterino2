@@ -30,6 +30,7 @@
 #include <mutex>
 #include <optional>
 #include <unordered_map>
+#include <unordered_set>
 
 class TestIrcMessageHandlerP;
 class TestEventSubMessagesP;
@@ -192,6 +193,14 @@ public:
     void reconnect() override;
     QString getCurrentStreamID() const override;
     void createClip(const QString &title, std::optional<int> duration);
+
+    /// Marks or unmarks a user as monitored by Twitch's "Suspicious User"
+    /// feature. This is only known for the current session and is populated
+    /// from EventSub events (requires moderator permissions).
+    void setUserMonitored(const QString &userID, bool monitored);
+
+    /// Returns true if the user with the given ID is known to be monitored.
+    bool isUserMonitored(const QString &userID) const;
 
     /// Delete the message with the specified ID as a moderator.
     ///
@@ -585,6 +594,9 @@ private:
     bool vip_ = false;
     bool staff_ = false;
     UniqueAccess<QString> roomID_;
+
+    /// IDs of users marked as monitored suspicious users in this channel
+    UniqueAccess<std::unordered_set<QString>> monitoredUserIDs_;
 
     // --
     QString lastSentMessage_;

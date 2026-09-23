@@ -2,6 +2,8 @@
 
 ## Unversioned
 
+- Minor: Messages from users marked as monitored with Twitch's Suspicious User feature are now highlighted and show a badge. This can be configured in the highlight settings. Requires moderator permissions.
+
 ## 2.5.5
 
 - Minor: Update emoji data to Unicode 17.0. (#6471)

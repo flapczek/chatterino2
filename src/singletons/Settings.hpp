@@ -667,6 +667,27 @@ public:
     };
     QStringSetting automodHighlightColor = {"/highlighting/automod/color", ""};
 
+    BoolSetting enableMonitoredHighlight = {
+        "/highlighting/monitored/enabled",
+        true,
+    };
+    BoolSetting enableMonitoredHighlightSound = {
+        "/highlighting/monitored/enableSound",
+        false,
+    };
+    BoolSetting enableMonitoredHighlightTaskbar = {
+        "/highlighting/monitored/enableTaskbarFlashing",
+        false,
+    };
+    QStringSetting monitoredHighlightSoundUrl = {
+        "/highlighting/monitored/soundUrl",
+        "",
+    };
+    QStringSetting monitoredHighlightColor = {
+        "/highlighting/monitored/color",
+        "",
+    };
+
     BoolSetting enableThreadHighlight = {
         "/highlighting/thread/nameIsHighlightKeyword", true};
     BoolSetting showThreadHighlightInMentions = {
